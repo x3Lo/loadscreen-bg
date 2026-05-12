@@ -22,10 +22,10 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 130vw;
-            height: 73.125vw;
-            min-height: 130vh;
-            min-width: 231.11vh;
+            width: 150vw;
+            height: 84.375vw;
+            min-height: 150vh;
+            min-width: 266.66vh;
             transform: translate(-50%, -50%);
             border: 0;
             pointer-events: none;
@@ -35,14 +35,15 @@
             inset: 0;
             z-index: 10;
             background: transparent;
+            pointer-events: auto;
         }
         .intro-fade {
             position: fixed;
             inset: 0;
-            z-index: 20;
+            z-index: 30;
             background: #000;
             opacity: 1;
-            transition: opacity 0.8s ease;
+            transition: opacity 1.2s ease;
             pointer-events: none;
         }
         .intro-fade.hidden {
@@ -83,30 +84,35 @@
                         iv_load_policy: 3,
                         disablekb: 1,
                         fs: 0,
-                        playsinline: 1
+                        playsinline: 1,
+                        cc_load_policy: 0,
+                        enablejsapi: 1
                     },
                     events: {
                         onReady: function (e) {
                             try { e.target.setPlaybackQuality(quality); } catch (err) {}
+                            try { e.target.playVideo(); } catch (err) {}
                             if (wantSound) {
                                 setTimeout(function () {
                                     try {
                                         e.target.unMute();
                                         e.target.setVolume(100);
                                     } catch (err) {}
-                                }, 800);
+                                }, 1500);
                             }
-                            try { e.target.playVideo(); } catch (err) {}
                         },
                         onStateChange: function (e) {
                             if (e.data === YT.PlayerState.PLAYING) {
                                 try { e.target.setPlaybackQuality(quality); } catch (err) {}
                                 const fade = document.getElementById('introFade');
                                 if (fade) {
-                                    setTimeout(function () { fade.classList.add('hidden'); }, 400);
+                                    setTimeout(function () { fade.classList.add('hidden'); }, 1200);
                                 }
                             }
                             if (e.data === YT.PlayerState.ENDED) {
+                                try { e.target.playVideo(); } catch (err) {}
+                            }
+                            if (e.data === YT.PlayerState.PAUSED) {
                                 try { e.target.playVideo(); } catch (err) {}
                             }
                         }
