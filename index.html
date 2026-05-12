@@ -16,6 +16,13 @@
             position: fixed;
             inset: 0;
             overflow: hidden;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        .video-wrapper.ready {
+            visibility: visible;
+            opacity: 1;
         }
         .video-wrapper iframe,
         .video-wrapper #player {
@@ -37,26 +44,24 @@
             background: transparent;
             pointer-events: auto;
         }
-        .intro-fade {
+        .black-cover {
             position: fixed;
             inset: 0;
-            z-index: 30;
+            z-index: 50;
             background: #000;
-            opacity: 1;
-            transition: opacity 1.2s ease;
             pointer-events: none;
         }
-        .intro-fade.hidden {
-            opacity: 0;
+        .black-cover.hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="video-wrapper">
+    <div class="video-wrapper" id="wrapper">
         <div id="player"></div>
     </div>
     <div class="click-block"></div>
-    <div class="intro-fade" id="introFade"></div>
+    <div class="black-cover" id="cover"></div>
     <script>
         (function () {
             const params = new URLSearchParams(window.location.search);
@@ -68,6 +73,18 @@
             const tag = document.createElement('script');
             tag.src = 'https://www.youtube.com/iframe_api';
             document.head.appendChild(tag);
+
+            let revealed = false;
+            function reveal() {
+                if (revealed) return;
+                revealed = true;
+                const wrapper = document.getElementById('wrapper');
+                const cover = document.getElementById('cover');
+                if (wrapper) wrapper.classList.add('ready');
+                setTimeout(function () {
+                    if (cover) cover.classList.add('hidden');
+                }, 800);
+            }
 
             window.onYouTubeIframeAPIReady = function () {
                 new YT.Player('player', {
@@ -104,10 +121,7 @@
                         onStateChange: function (e) {
                             if (e.data === YT.PlayerState.PLAYING) {
                                 try { e.target.setPlaybackQuality(quality); } catch (err) {}
-                                const fade = document.getElementById('introFade');
-                                if (fade) {
-                                    setTimeout(function () { fade.classList.add('hidden'); }, 1200);
-                                }
+                                reveal();
                             }
                             if (e.data === YT.PlayerState.ENDED) {
                                 try { e.target.playVideo(); } catch (err) {}
