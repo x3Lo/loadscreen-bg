@@ -17,14 +17,15 @@
             inset: 0;
             overflow: hidden;
         }
-        .video-wrapper iframe {
+        .video-wrapper iframe,
+        .video-wrapper #player {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 100vw;
-            height: 56.25vw;
-            min-height: 100vh;
-            min-width: 177.77vh;
+            width: 130vw;
+            height: 73.125vw;
+            min-height: 130vh;
+            min-width: 231.11vh;
             transform: translate(-50%, -50%);
             border: 0;
             pointer-events: none;
@@ -35,13 +36,26 @@
             z-index: 10;
             background: transparent;
         }
+        .intro-fade {
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            background: #000;
+            opacity: 1;
+            transition: opacity 0.8s ease;
+            pointer-events: none;
+        }
+        .intro-fade.hidden {
+            opacity: 0;
+        }
     </style>
 </head>
 <body>
-    <div class="video-wrapper" id="wrapper">
+    <div class="video-wrapper">
         <div id="player"></div>
     </div>
     <div class="click-block"></div>
+    <div class="intro-fade" id="introFade"></div>
     <script>
         (function () {
             const params = new URLSearchParams(window.location.search);
@@ -54,9 +68,8 @@
             tag.src = 'https://www.youtube.com/iframe_api';
             document.head.appendChild(tag);
 
-            let player;
             window.onYouTubeIframeAPIReady = function () {
-                player = new YT.Player('player', {
+                new YT.Player('player', {
                     videoId: videoId,
                     playerVars: {
                         autoplay: 1,
@@ -88,6 +101,10 @@
                         onStateChange: function (e) {
                             if (e.data === YT.PlayerState.PLAYING) {
                                 try { e.target.setPlaybackQuality(quality); } catch (err) {}
+                                const fade = document.getElementById('introFade');
+                                if (fade) {
+                                    setTimeout(function () { fade.classList.add('hidden'); }, 400);
+                                }
                             }
                             if (e.data === YT.PlayerState.ENDED) {
                                 try { e.target.playVideo(); } catch (err) {}
