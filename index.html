@@ -16,7 +16,6 @@
             position: fixed;
             inset: 0;
             overflow: hidden;
-            pointer-events: none;
         }
         .video-wrapper iframe {
             position: absolute;
@@ -30,27 +29,73 @@
             border: 0;
             pointer-events: none;
         }
+        .click-block {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            background: transparent;
+        }
     </style>
 </head>
 <body>
-    <div class="video-wrapper" id="wrapper"></div>
+    <div class="video-wrapper" id="wrapper">
+        <div id="player"></div>
+    </div>
+    <div class="click-block"></div>
     <script>
         (function () {
             const params = new URLSearchParams(window.location.search);
             const videoId = (params.get('v') || '').replace(/[^a-zA-Z0-9_-]/g, '');
+            const wantSound = params.get('sound') !== '0';
+            const quality = (params.get('q') || 'hd1080').replace(/[^a-zA-Z0-9]/g, '');
             if (!videoId) return;
 
-            const src = 'https://www.youtube.com/embed/' + videoId
-                + '?autoplay=1&mute=1&controls=0&loop=1&playlist=' + videoId
-                + '&modestbranding=1&showinfo=0&rel=0&iv_load_policy=3'
-                + '&disablekb=1&fs=0&playsinline=1';
+            const tag = document.createElement('script');
+            tag.src = 'https://www.youtube.com/iframe_api';
+            document.head.appendChild(tag);
 
-            const iframe = document.createElement('iframe');
-            iframe.src = src;
-            iframe.setAttribute('allow', 'autoplay; encrypted-media');
-            iframe.setAttribute('frameborder', '0');
-            iframe.setAttribute('allowfullscreen', '');
-            document.getElementById('wrapper').appendChild(iframe);
+            let player;
+            window.onYouTubeIframeAPIReady = function () {
+                player = new YT.Player('player', {
+                    videoId: videoId,
+                    playerVars: {
+                        autoplay: 1,
+                        mute: 1,
+                        controls: 0,
+                        loop: 1,
+                        playlist: videoId,
+                        modestbranding: 1,
+                        showinfo: 0,
+                        rel: 0,
+                        iv_load_policy: 3,
+                        disablekb: 1,
+                        fs: 0,
+                        playsinline: 1
+                    },
+                    events: {
+                        onReady: function (e) {
+                            try { e.target.setPlaybackQuality(quality); } catch (err) {}
+                            if (wantSound) {
+                                setTimeout(function () {
+                                    try {
+                                        e.target.unMute();
+                                        e.target.setVolume(100);
+                                    } catch (err) {}
+                                }, 800);
+                            }
+                            try { e.target.playVideo(); } catch (err) {}
+                        },
+                        onStateChange: function (e) {
+                            if (e.data === YT.PlayerState.PLAYING) {
+                                try { e.target.setPlaybackQuality(quality); } catch (err) {}
+                            }
+                            if (e.data === YT.PlayerState.ENDED) {
+                                try { e.target.playVideo(); } catch (err) {}
+                            }
+                        }
+                    }
+                });
+            };
         })();
     </script>
 </body>
