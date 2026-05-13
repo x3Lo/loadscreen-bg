@@ -14,23 +14,9 @@
         }
         .video-wrapper {
             position: fixed;
-            top: 50%;
-            left: -10000px;
-            width: 100vw;
-            height: 100vh;
+            inset: 0;
             overflow: hidden;
-            visibility: hidden;
-            opacity: 0;
-            transition: opacity 0.8s ease;
-            z-index: 1;
         }
-        .video-wrapper.ready {
-            left: 0;
-            top: 0;
-            visibility: visible;
-            opacity: 1;
-        }
-        .video-wrapper iframe,
         .video-wrapper #player {
             position: absolute;
             top: 50%;
@@ -50,21 +36,10 @@
             background: transparent;
             pointer-events: auto;
         }
-        .black-cover {
-            position: fixed;
-            inset: 0;
-            z-index: 99999;
-            background: #000;
-            pointer-events: none;
-        }
-        .black-cover.hidden {
-            display: none;
-        }
     </style>
 </head>
 <body>
-    <div class="black-cover" id="cover"></div>
-    <div class="video-wrapper" id="wrapper">
+    <div class="video-wrapper">
         <div id="player"></div>
     </div>
     <div class="click-block"></div>
@@ -79,31 +54,6 @@
             const tag = document.createElement('script');
             tag.src = 'https://www.youtube.com/iframe_api';
             document.head.appendChild(tag);
-
-            let revealed = false;
-            let pollInterval = null;
-            function reveal() {
-                if (revealed) return;
-                revealed = true;
-                if (pollInterval) clearInterval(pollInterval);
-                const wrapper = document.getElementById('wrapper');
-                const cover = document.getElementById('cover');
-                if (wrapper) wrapper.classList.add('ready');
-                setTimeout(function () {
-                    if (cover) cover.classList.add('hidden');
-                }, 600);
-            }
-            function startPolling(player) {
-                if (pollInterval) clearInterval(pollInterval);
-                pollInterval = setInterval(function () {
-                    try {
-                        const t = player.getCurrentTime();
-                        if (t && t > 0.5) {
-                            reveal();
-                        }
-                    } catch (err) {}
-                }, 100);
-            }
 
             window.onYouTubeIframeAPIReady = function () {
                 new YT.Player('player', {
@@ -120,9 +70,7 @@
                         iv_load_policy: 3,
                         disablekb: 1,
                         fs: 0,
-                        playsinline: 1,
-                        cc_load_policy: 0,
-                        enablejsapi: 1
+                        playsinline: 1
                     },
                     events: {
                         onReady: function (e) {
@@ -134,14 +82,10 @@
                                         e.target.unMute();
                                         e.target.setVolume(100);
                                     } catch (err) {}
-                                }, 1500);
+                                }, 1200);
                             }
                         },
                         onStateChange: function (e) {
-                            if (e.data === YT.PlayerState.PLAYING) {
-                                try { e.target.setPlaybackQuality(quality); } catch (err) {}
-                                startPolling(e.target);
-                            }
                             if (e.data === YT.PlayerState.ENDED) {
                                 try { e.target.playVideo(); } catch (err) {}
                             }
