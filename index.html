@@ -14,13 +14,19 @@
         }
         .video-wrapper {
             position: fixed;
-            inset: 0;
+            top: 50%;
+            left: -10000px;
+            width: 100vw;
+            height: 100vh;
             overflow: hidden;
             visibility: hidden;
             opacity: 0;
             transition: opacity 0.8s ease;
+            z-index: 1;
         }
         .video-wrapper.ready {
+            left: 0;
+            top: 0;
             visibility: visible;
             opacity: 1;
         }
@@ -47,7 +53,7 @@
         .black-cover {
             position: fixed;
             inset: 0;
-            z-index: 50;
+            z-index: 99999;
             background: #000;
             pointer-events: none;
         }
@@ -57,11 +63,11 @@
     </style>
 </head>
 <body>
+    <div class="black-cover" id="cover"></div>
     <div class="video-wrapper" id="wrapper">
         <div id="player"></div>
     </div>
     <div class="click-block"></div>
-    <div class="black-cover" id="cover"></div>
     <script>
         (function () {
             const params = new URLSearchParams(window.location.search);
@@ -75,15 +81,28 @@
             document.head.appendChild(tag);
 
             let revealed = false;
+            let pollInterval = null;
             function reveal() {
                 if (revealed) return;
                 revealed = true;
+                if (pollInterval) clearInterval(pollInterval);
                 const wrapper = document.getElementById('wrapper');
                 const cover = document.getElementById('cover');
                 if (wrapper) wrapper.classList.add('ready');
                 setTimeout(function () {
                     if (cover) cover.classList.add('hidden');
-                }, 800);
+                }, 600);
+            }
+            function startPolling(player) {
+                if (pollInterval) clearInterval(pollInterval);
+                pollInterval = setInterval(function () {
+                    try {
+                        const t = player.getCurrentTime();
+                        if (t && t > 0.5) {
+                            reveal();
+                        }
+                    } catch (err) {}
+                }, 100);
             }
 
             window.onYouTubeIframeAPIReady = function () {
@@ -121,7 +140,7 @@
                         onStateChange: function (e) {
                             if (e.data === YT.PlayerState.PLAYING) {
                                 try { e.target.setPlaybackQuality(quality); } catch (err) {}
-                                reveal();
+                                startPolling(e.target);
                             }
                             if (e.data === YT.PlayerState.ENDED) {
                                 try { e.target.playVideo(); } catch (err) {}
